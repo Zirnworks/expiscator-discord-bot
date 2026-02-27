@@ -1,0 +1,27 @@
+{
+  "deny": [
+    "Read(//Users/zirn/Documents/Vault/Agents/Auditor/**)",
+    "Edit(//Users/zirn/Documents/Vault/Agents/Auditor/**)",
+    "Read(//Users/zirn/Documents/Vault/Agents/Automatos/**)",
+    "Edit(//Users/zirn/Documents/Vault/Agents/Automatos/**)",
+    "Read(//Users/zirn/Documents/Vault/Agents/Cronologus/**)",
+    "Edit(//Users/zirn/Documents/Vault/Agents/Cronologus/**)",
+    "Read(//Users/zirn/Documents/Vault/Agents/Expositor/**)",
+    "Edit(//Users/zirn/Documents/Vault/Agents/Expositor/**)",
+    "Read(//Users/zirn/Documents/Vault/Agents/Fractora/**)",
+    "Edit(//Users/zirn/Documents/Vault/Agents/Fractora/**)",
+    "Read(//Users/zirn/Documents/Vault/Agents/Ludifex/**)",
+    "Edit(//Users/zirn/Documents/Vault/Agents/Ludifex/**)",
+    "Read(//Users/zirn/Documents/Vault/Agents/Mechanica/**)",
+    "Edit(//Users/zirn/Documents/Vault/Agents/Mechanica/**)",
+    "Read(//Users/zirn/Documents/Vault/Agents/Pictor/**)",
+    "Edit(//Users/zirn/Documents/Vault/Agents/Pictor/**)",
+    "Read(//Users/zirn/Documents/Vault/Agents/Praeceptor/**)",
+    "Edit(//Users/zirn/Documents/Vault/Agents/Praeceptor/**)",
+    "Read(//Users/zirn/Documents/Vault/Agents/Topiator/**)",
+    "Edit(//Users/zirn/Documents/Vault/Agents/Topiator/**)",
+    "Read(//Users/zirn/Documents/Vault/Agents/testor/**)",
+    "Edit(//Users/zirn/Documents/Vault/Agents/testor/**)"
+  ],
+  "additionalDirectories": []
+}

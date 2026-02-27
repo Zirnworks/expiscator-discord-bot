@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Temp files
+*.tmp
+*.log
+
+# Sandbox / private content
+sandbox/
+
+# Nuntiarium archive (grows indefinitely)
+nuntiarium/archive.jsonl
+
+# Runtime artifacts
+_runtime/
