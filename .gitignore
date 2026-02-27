@@ -20,3 +20,7 @@ nuntiarium/archive.jsonl
 
 # Runtime artifacts
 _runtime/
+
+# Expiscator data (contains personal messages + bot token)
+data/
+config.json

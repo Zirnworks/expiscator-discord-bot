@@ -1,0 +1,20 @@
+{
+  "bot_token": "YOUR_BOT_TOKEN",
+  "zirn_user_id": "YOUR_DISCORD_USER_ID",
+  "channels": [
+    {
+      "channel_id": "CHANNEL_ID_HERE",
+      "label": "server-name/channel-name",
+      "enabled": true
+    }
+  ],
+  "options": {
+    "download_attachments": false,
+    "skip_bot_messages": true,
+    "skip_system_messages": true,
+    "request_delay_seconds": 0.5,
+    "merge_window_seconds": 300,
+    "conversation_gap_minutes": 30,
+    "max_turns_per_segment": 20
+  }
+}
