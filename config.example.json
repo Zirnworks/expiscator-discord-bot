@@ -1,13 +1,14 @@
 {
   "bot_token": "YOUR_BOT_TOKEN",
   "zirn_user_id": "YOUR_DISCORD_USER_ID",
-  "channels": [
+  "servers": [
     {
-      "channel_id": "CHANNEL_ID_HERE",
-      "label": "server-name/channel-name",
+      "guild_id": "SERVER_ID_HERE",
+      "label": "my-server",
       "enabled": true
     }
   ],
+  "channels": [],
   "options": {
     "download_attachments": false,
     "skip_bot_messages": true,

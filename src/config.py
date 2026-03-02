@@ -34,10 +34,18 @@ class Options:
 
 
 @dataclass
+class ServerConfig:
+    guild_id: str
+    label: str
+    enabled: bool = True
+
+
+@dataclass
 class Config:
     bot_token: str
     zirn_user_id: str
     channels: list = field(default_factory=list)
+    servers: list = field(default_factory=list)
     options: Options = field(default_factory=Options)
 
 
@@ -64,7 +72,7 @@ def load_config() -> Config:
     if not zirn_user_id:
         raise ValueError("zirn_user_id is required in config.json.")
 
-    # Parse channels
+    # Parse individual channels
     channels = []
     for ch in raw.get("channels", []):
         channels.append(ChannelConfig(
@@ -73,8 +81,19 @@ def load_config() -> Config:
             enabled=ch.get("enabled", True),
         ))
 
-    if not channels:
-        raise ValueError("At least one channel is required in config.json.")
+    # Parse servers (all text channels will be auto-discovered at runtime)
+    servers = []
+    for srv in raw.get("servers", []):
+        servers.append(ServerConfig(
+            guild_id=srv["guild_id"],
+            label=srv.get("label", srv["guild_id"]),
+            enabled=srv.get("enabled", True),
+        ))
+
+    if not channels and not servers:
+        raise ValueError(
+            "At least one channel or server is required in config.json."
+        )
 
     # Parse options
     opts_raw = raw.get("options", {})
@@ -97,5 +116,6 @@ def load_config() -> Config:
         bot_token=bot_token,
         zirn_user_id=zirn_user_id,
         channels=channels,
+        servers=servers,
         options=options,
     )

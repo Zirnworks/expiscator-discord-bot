@@ -88,3 +88,12 @@ class DiscordClient:
     def get_channel(self, channel_id: str) -> dict:
         """Fetch channel metadata."""
         return self._request(f"{BASE_URL}/channels/{channel_id}")
+
+    def get_guild_channels(self, guild_id: str) -> list:
+        """Fetch all channels in a server (guild).
+
+        Returns only text channels (type 0) and announcement channels (type 5).
+        """
+        channels = self._request(f"{BASE_URL}/guilds/{guild_id}/channels")
+        # Type 0 = text, 5 = announcement — both contain readable messages
+        return [ch for ch in channels if ch.get("type") in (0, 5)]

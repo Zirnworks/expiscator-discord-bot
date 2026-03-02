@@ -5,7 +5,7 @@ import sys
 
 from .anonymizer import UserMapper
 from .client import DiscordClient
-from .config import PROCESSED_DIR, load_config
+from .config import ChannelConfig, PROCESSED_DIR, RAW_DIR, load_config
 from .extractor import extract_channel, get_extraction_status, load_raw_messages
 from .formatter import format_jsonl, format_markdown
 from .merger import merge_messages, segment_conversations
@@ -18,16 +18,40 @@ logging.basicConfig(
 logger = logging.getLogger("expiscator")
 
 
-def cmd_extract(config):
-    """Extract raw messages from Discord."""
-    client = DiscordClient(config.bot_token, delay=config.options.request_delay_seconds)
-    results = []
+def _resolve_channels(config, client: DiscordClient) -> list:
+    """Build the full channel list from explicit channels + server auto-discovery."""
+    channels = [ch for ch in config.channels if ch.enabled]
 
-    for channel in config.channels:
-        if not channel.enabled:
-            logger.info("Skipping disabled channel: %s", channel.label)
+    for server in config.servers:
+        if not server.enabled:
+            logger.info("Skipping disabled server: %s", server.label)
             continue
 
+        logger.info("Discovering channels in server: %s", server.label)
+        api_channels = client.get_guild_channels(server.guild_id)
+        for ch in api_channels:
+            channel_name = ch.get("name", ch["id"])
+            label = f"{server.label}/{channel_name}"
+            channels.append(ChannelConfig(
+                channel_id=ch["id"],
+                label=label,
+                enabled=True,
+            ))
+            logger.info("  Found: %s", label)
+
+    return channels
+
+
+def cmd_extract(config):
+    """Extract raw messages from Discord.
+
+    Returns the resolved list of ChannelConfig objects (including server-discovered ones).
+    """
+    client = DiscordClient(config.bot_token, delay=config.options.request_delay_seconds)
+    channels = _resolve_channels(config, client)
+    results = []
+
+    for channel in channels:
         logger.info("Extracting: %s", channel.label)
         result = extract_channel(client, channel)
         results.append(result)
@@ -37,18 +61,31 @@ def cmd_extract(config):
             result["new_messages"], result["total_stored"],
         )
 
-    return results
+    return channels
 
 
-def cmd_process(config):
-    """Process raw messages into training JSONL and browsable Markdown."""
+def cmd_process(config, channels=None):
+    """Process raw messages into training JSONL and browsable Markdown.
+
+    If channels is provided (e.g., from a prior extract), use that list.
+    Otherwise, process all raw files found in data/raw/.
+    """
     mapper = UserMapper(config.zirn_user_id)
     results = []
 
-    for channel in config.channels:
-        if not channel.enabled:
-            continue
+    if channels is None:
+        # Build channel list from whatever raw data exists
+        known = {ch.channel_id: ch for ch in config.channels}
+        channels = []
+        for raw_file in sorted(RAW_DIR.glob("*.jsonl")):
+            ch_id = raw_file.stem
+            if ch_id in known:
+                channels.append(known[ch_id])
+            else:
+                # Server-discovered channel — use ID as label
+                channels.append(ChannelConfig(channel_id=ch_id, label=ch_id))
 
+    for channel in channels:
         logger.info("Processing: %s", channel.label)
 
         # Load raw messages (deduped, sorted oldest-first)
@@ -132,8 +169,8 @@ def main():
     elif command == "process":
         cmd_process(config)
     elif command == "run":
-        cmd_extract(config)
-        cmd_process(config)
+        channels = cmd_extract(config)
+        cmd_process(config, channels=channels)
     else:
         print(f"Unknown command: {command}")
         print("Usage: python3 -m src.main [extract|process|status|run]")
