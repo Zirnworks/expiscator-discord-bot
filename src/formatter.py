@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from .anonymizer import Anonymizer
+from .anonymizer import UserMapper
 from .merger import Turn
 
 
@@ -32,11 +32,11 @@ def _format_embeds(embeds: list) -> str:
     return "\n".join(parts)
 
 
-def _turn_content(turn: Turn, anonymizer: Anonymizer) -> str:
+def _turn_content(turn: Turn) -> str:
     """Build the full content string for a turn, including attachments and embeds."""
     parts = []
     if turn.content:
-        parts.append(anonymizer.anonymize_content(turn.content))
+        parts.append(turn.content)
     if turn.attachments:
         parts.append(_format_attachments(turn.attachments))
     if turn.embeds:
@@ -47,7 +47,7 @@ def _turn_content(turn: Turn, anonymizer: Anonymizer) -> str:
 def format_jsonl(
     segments: list,
     channel_label: str,
-    anonymizer: Anonymizer,
+    mapper: UserMapper,
     output_path: Path,
 ):
     """Write conversation segments as training JSONL.
@@ -58,11 +58,11 @@ def format_jsonl(
         for segment in segments:
             messages = []
             for turn in segment:
-                role = anonymizer.get_role(turn.author_id)
-                label = anonymizer.get_label(turn.author_id, turn.author_name)
-                content = _turn_content(turn, anonymizer)
+                role = mapper.get_role(turn.author_id)
+                label = mapper.get_label(turn.author_id, turn.author_name)
+                content = _turn_content(turn)
 
-                # Prepend speaker label for non-Zirn users in multi-speaker contexts
+                # Prepend speaker name for non-Zirn users so model knows who's talking
                 if role == "user":
                     content = f"{label}: {content}"
 
@@ -85,7 +85,7 @@ def format_jsonl(
 def format_markdown(
     segments: list,
     channel_label: str,
-    anonymizer: Anonymizer,
+    mapper: UserMapper,
     output_path: Path,
 ):
     """Write conversation segments as browsable Markdown."""
@@ -106,9 +106,9 @@ def format_markdown(
         lines.append(f"\n### {t_start} - {t_end}\n")
 
         for turn in segment:
-            label = anonymizer.get_label(turn.author_id, turn.author_name)
+            label = mapper.get_label(turn.author_id, turn.author_name)
             time_str = turn.timestamp_start[11:16]
-            content = _turn_content(turn, anonymizer)
+            content = _turn_content(turn)
 
             lines.append(f"**{label}** ({time_str}):")
             # Indent content lines for readability

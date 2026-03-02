@@ -3,7 +3,7 @@
 import logging
 import sys
 
-from .anonymizer import Anonymizer
+from .anonymizer import UserMapper
 from .client import DiscordClient
 from .config import PROCESSED_DIR, load_config
 from .extractor import extract_channel, get_extraction_status, load_raw_messages
@@ -42,7 +42,7 @@ def cmd_extract(config):
 
 def cmd_process(config):
     """Process raw messages into training JSONL and browsable Markdown."""
-    anonymizer = Anonymizer(config.zirn_user_id)
+    mapper = UserMapper(config.zirn_user_id)
     results = []
 
     for channel in config.channels:
@@ -79,12 +79,12 @@ def cmd_process(config):
 
         # Write JSONL
         jsonl_path = PROCESSED_DIR / f"{safe_label}.jsonl"
-        format_jsonl(segments, channel.label, anonymizer, jsonl_path)
+        format_jsonl(segments, channel.label, mapper, jsonl_path)
         logger.info("  Wrote %s", jsonl_path)
 
         # Write Markdown
         md_path = PROCESSED_DIR / f"{safe_label}.md"
-        format_markdown(segments, channel.label, anonymizer, md_path)
+        format_markdown(segments, channel.label, mapper, md_path)
         logger.info("  Wrote %s", md_path)
 
         results.append({
@@ -94,9 +94,9 @@ def cmd_process(config):
             "segments": len(segments),
         })
 
-    # Save anonymizer state
-    anonymizer.save()
-    logger.info("Anonymization map saved (%d users mapped)", anonymizer._next_index - 1)
+    # Save user map
+    mapper.save()
+    logger.info("User map saved (%d users mapped)", len(mapper._mappings))
 
     return results
 
