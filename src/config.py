@@ -10,6 +10,7 @@ CONFIG_PATH = PROJECT_ROOT / "config.json"
 DATA_DIR = PROJECT_ROOT / "data"
 RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
+ATTACHMENTS_DIR = DATA_DIR / "attachments"
 STATE_PATH = DATA_DIR / "state.json"
 USER_MAP_PATH = DATA_DIR / "user_map.json"
 
@@ -111,6 +112,7 @@ def load_config() -> Config:
     # Ensure data directories exist
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
+    ATTACHMENTS_DIR.mkdir(parents=True, exist_ok=True)
 
     return Config(
         bot_token=bot_token,

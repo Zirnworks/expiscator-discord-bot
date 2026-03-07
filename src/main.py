@@ -6,6 +6,7 @@ import sys
 from .anonymizer import UserMapper
 from .client import DiscordClient
 from .config import ChannelConfig, PROCESSED_DIR, RAW_DIR, load_config
+from .downloader import download_turn_attachments
 from .extractor import extract_channel, get_extraction_status, load_raw_messages
 from .formatter import format_jsonl, format_markdown
 from .merger import merge_messages, segment_conversations
@@ -111,6 +112,21 @@ def cmd_process(config, channels=None):
         )
         logger.info("  %d turns -> %d conversation segments", len(turns), len(segments))
 
+        # Download attachments if enabled
+        local_paths = {}
+        if config.options.download_attachments:
+            logger.info("  Downloading attachments...")
+            for turn in turns:
+                if turn.attachments:
+                    paths = download_turn_attachments(
+                        turn.attachments,
+                        channel.channel_id,
+                        turn.message_ids,
+                        max_size_mb=config.options.max_attachment_size_mb,
+                    )
+                    local_paths.update(paths)
+            logger.info("  Downloaded %d attachments", len(local_paths))
+
         # Generate safe filename from label
         safe_label = channel.label.replace("/", "_").replace(" ", "-")
 
@@ -119,9 +135,9 @@ def cmd_process(config, channels=None):
         format_jsonl(segments, channel.label, mapper, jsonl_path)
         logger.info("  Wrote %s", jsonl_path)
 
-        # Write Markdown
+        # Write Markdown (with inline images for Obsidian)
         md_path = PROCESSED_DIR / f"{safe_label}.md"
-        format_markdown(segments, channel.label, mapper, md_path)
+        format_markdown(segments, channel.label, mapper, md_path, local_paths=local_paths)
         logger.info("  Wrote %s", md_path)
 
         results.append({
