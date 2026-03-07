@@ -7,7 +7,7 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).parent.parent
 CONFIG_PATH = PROJECT_ROOT / "config.json"
-DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR = Path("/Users/zirn/Data/Expiscator/discord-data")
 RAW_DIR = DATA_DIR / "raw"
 PROCESSED_DIR = DATA_DIR / "processed"
 ATTACHMENTS_DIR = DATA_DIR / "attachments"

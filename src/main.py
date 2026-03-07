@@ -144,8 +144,9 @@ def cmd_process(config, channels=None):
                         logger.info("  Attachment progress: %d/%d", done, total_atts)
                 logger.info("  Finished: %d attachments downloaded", len(local_paths))
 
-        # Generate safe filename from label
-        safe_label = channel.label.replace("/", "_").replace(" ", "-")
+        # Use just the channel name (last part of label) for filenames
+        ch_name = channel.label.rsplit("/", 1)[-1] if "/" in channel.label else channel.label
+        safe_label = ch_name.replace(" ", "-")
 
         # Write JSONL
         jsonl_path = PROCESSED_DIR / f"{safe_label}.jsonl"

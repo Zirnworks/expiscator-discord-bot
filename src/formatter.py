@@ -138,21 +138,21 @@ def format_markdown(
     if local_paths is None:
         local_paths = {}
 
-    lines = [f"# {channel_label}\n"]
+    lines = [f"# {channel_label}"]
 
     current_date = None
 
     for segment in segments:
-        # Date header
+        # Date header (only when date changes)
         seg_date = segment[0].timestamp_start[:10]  # YYYY-MM-DD
         if seg_date != current_date:
             current_date = seg_date
-            lines.append(f"\n## {current_date}\n")
+            lines.append(f"## {current_date}")
 
         # Time range header
         t_start = segment[0].timestamp_start[11:16]  # HH:MM
         t_end = segment[-1].timestamp_end[11:16]
-        lines.append(f"\n### {t_start} - {t_end}\n")
+        lines.append(f"### {t_start} - {t_end}")
 
         for turn in segment:
             label = mapper.get_label(turn.author_id, turn.author_name)
@@ -164,7 +164,7 @@ def format_markdown(
                 lines.append(line)
             lines.append("")
 
-        lines.append("---\n")
+        lines.append("---")
 
     with open(output_path, "w") as f:
         f.write("\n".join(lines))
