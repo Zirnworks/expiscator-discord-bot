@@ -42,7 +42,7 @@ def _format_attachments_obsidian(attachments: list, local_paths: dict,
 
             suffix = local_path.suffix.lower()
             if suffix in IMAGE_EXTENSIONS:
-                parts.append(f"![{filename}]({rel_path})")
+                parts.append(f"![{filename}|400x300]({rel_path})")
             else:
                 parts.append(f"[{filename}]({rel_path})")
         else:

@@ -4,7 +4,7 @@ import logging
 import sys
 
 from .anonymizer import UserMapper
-from .client import DiscordClient
+from .client import DiscordClient, DiscordAPIError
 from .config import ChannelConfig, PROCESSED_DIR, RAW_DIR, load_config
 from .downloader import download_turn_attachments
 from .extractor import extract_channel, get_extraction_status, load_raw_messages
@@ -52,17 +52,25 @@ def cmd_extract(config):
     channels = _resolve_channels(config, client)
     results = []
 
+    extracted_channels = []
     for channel in channels:
         logger.info("Extracting: %s", channel.label)
-        result = extract_channel(client, channel)
-        results.append(result)
-        logger.info(
-            "  %s: %s mode, %d new messages, %d total stored",
-            result["channel"], result["mode"],
-            result["new_messages"], result["total_stored"],
-        )
+        try:
+            result = extract_channel(client, channel)
+            results.append(result)
+            extracted_channels.append(channel)
+            logger.info(
+                "  %s: %s mode, %d new messages, %d total stored",
+                result["channel"], result["mode"],
+                result["new_messages"], result["total_stored"],
+            )
+        except DiscordAPIError as e:
+            if e.status == 403:
+                logger.warning("  Skipping %s — no permission to read messages", channel.label)
+            else:
+                logger.error("  Error on %s: %s", channel.label, e)
 
-    return channels
+    return extracted_channels
 
 
 def cmd_process(config, channels=None):
@@ -115,17 +123,26 @@ def cmd_process(config, channels=None):
         # Download attachments if enabled
         local_paths = {}
         if config.options.download_attachments:
-            logger.info("  Downloading attachments...")
-            for turn in turns:
-                if turn.attachments:
+            att_turns = [t for t in turns if t.attachments]
+            total_atts = sum(len(t.attachments) for t in att_turns)
+            if total_atts:
+                logger.info("  Downloading %d attachments...", total_atts)
+                done = 0
+                for turn in att_turns:
+                    # Extract channel name from label (e.g. "my-server/general" -> "general")
+                    ch_name = channel.label.rsplit("/", 1)[-1] if "/" in channel.label else ""
                     paths = download_turn_attachments(
                         turn.attachments,
                         channel.channel_id,
                         turn.message_ids,
                         max_size_mb=config.options.max_attachment_size_mb,
+                        channel_name=ch_name,
                     )
                     local_paths.update(paths)
-            logger.info("  Downloaded %d attachments", len(local_paths))
+                    done += len(turn.attachments)
+                    if done % 10 == 0:
+                        logger.info("  Attachment progress: %d/%d", done, total_atts)
+                logger.info("  Finished: %d attachments downloaded", len(local_paths))
 
         # Generate safe filename from label
         safe_label = channel.label.replace("/", "_").replace(" ", "-")

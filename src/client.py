@@ -24,17 +24,23 @@ class DiscordClient:
         self.bot_token = bot_token
         self.delay = delay
 
-    def _request(self, url: str) -> list | dict:
+    def _request(self, url: str, _retries: int = 3) -> list | dict:
         """Make an authenticated GET request to the Discord API."""
         req = urllib.request.Request(url)
         req.add_header("Authorization", f"Bot {self.bot_token}")
         req.add_header("User-Agent", "Expiscator/1.0")
 
         try:
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 self._handle_rate_limit(resp.headers)
                 return data
+        except (TimeoutError, urllib.error.URLError) as e:
+            if _retries > 0:
+                logger.warning("Request timed out, retrying (%d left): %s", _retries, url)
+                time.sleep(2)
+                return self._request(url, _retries=_retries - 1)
+            raise DiscordAPIError(0, f"Request timed out after retries: {url}")
         except urllib.error.HTTPError as e:
             body = e.read().decode("utf-8", errors="replace")
             if e.code == 429:
@@ -42,7 +48,7 @@ class DiscordClient:
                 retry_after = retry_info.get("retry_after", 1.0)
                 logger.warning("Rate limited. Sleeping %.1fs", retry_after)
                 time.sleep(retry_after)
-                return self._request(url)
+                return self._request(url, _retries=_retries)
             elif e.code == 403:
                 raise DiscordAPIError(403, f"Forbidden — missing permissions for {url}")
             elif e.code == 404:
